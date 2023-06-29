@@ -1,19 +1,16 @@
-import Image from "next/image";
-import * as React from 'react';
+import { CrewTable } from "@/components/CrewTable";
+// import { useState, useReducer } from "react";
+// This would be the second error you will get... next page does not support react hooks because its a server side rendered app
+// meaning this stuff right here is all "backend" stuff and you can not use react hooks here
 
-import ReactDOM from 'react-dom/client';
-
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+// import ReactDOM from 'react-dom/client';
+// you do not need to import react-dom because nextjs does it for you and it will cause an error if you do
+// This was the main error but after you fix this you will get another error
 
 /*
 https://github.com/r-spacex/SpaceX-API/blob/master/docs/crew/v4/all.md
 */
-type Crew = {
+export type Crew = {
   name: string;
   agency: string;
   image: string;
@@ -40,46 +37,8 @@ async function fetchSpaceXCrew() {
   }
 }
 
-const columnHelper = createColumnHelper<Crew>()
-
-const columns = [
-
-  columnHelper.accessor('name', {
-    cell: info => <i>{info.getValue()}</i>,
-    header: () => <span>Name</span>,
-    footer: info => info.column.id,
-  }),
-  columnHelper.accessor('agency', {
-    header: () => 'agency',
-    cell: info => info.renderValue(),
-    footer: info => info.column.id,
-  }),
-  columnHelper.accessor('status', {
-    header: () => <span>Visits</span>,
-    footer: info => info.column.id,
-  }),
-  columnHelper.accessor('launches', {
-    header: 'Status',
-    footer: info => info.column.id,
-  }),
-  columnHelper.accessor('wikipedia', {
-    header: 'wiki',
-    footer: info => info.column.id,
-  }),
-]
-
-
 export default async function Home() {
   const crewInfo: Crew[] = await fetchSpaceXCrew();
-
-  const [data, setData] = React.useState(() => [...crewInfo])
-  const rerender = React.useReducer(() => ({}), {})[1]
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
 
   return (
     <main className="">
@@ -97,59 +56,15 @@ export default async function Home() {
         6. when we click on wiki we should open a new tab with the wikipedia page
         7. We should be able to see the number of launches they have been on
         */}
-        {crewInfo?.map((crew) => (
-            <div key={crew.id} className="w-auto h-auto">
-              <Image src={crew.image} alt={crew.name} width={200} height={200} />
-            </div>
-        ))}
-      </section>
-          
-      <table>
-        <thead>
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          {table.getFooterGroups().map(footerGroup => (
-            <tr key={footerGroup.id}>
-              {footerGroup.headers.map(header => (
-                <th key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.footer,
-                        header.getContext()
-                      )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </tfoot>
-      </table>
 
+        {/* THIS CAN BE REMOVED SINCE WE ADDED A TABLE */}
+        {/* {crewInfo?.map((crew) => (
+          <div key={crew.id} className="w-auto h-auto">
+            <Image src={crew.image} alt={crew.name} width={200} height={200} />
+          </div>
+        ))} */}
+        <CrewTable crewInfo={crewInfo} />
+      </section>
     </main>
   );
 }
