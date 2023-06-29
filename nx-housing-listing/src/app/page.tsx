@@ -1,4 +1,14 @@
 import Image from "next/image";
+import * as React from 'react';
+
+import ReactDOM from 'react-dom/client';
+
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 
 /*
 https://github.com/r-spacex/SpaceX-API/blob/master/docs/crew/v4/all.md
@@ -30,8 +40,46 @@ async function fetchSpaceXCrew() {
   }
 }
 
+const columnHelper = createColumnHelper<Crew>()
+
+const columns = [
+
+  columnHelper.accessor('name', {
+    cell: info => <i>{info.getValue()}</i>,
+    header: () => <span>Name</span>,
+    footer: info => info.column.id,
+  }),
+  columnHelper.accessor('agency', {
+    header: () => 'agency',
+    cell: info => info.renderValue(),
+    footer: info => info.column.id,
+  }),
+  columnHelper.accessor('status', {
+    header: () => <span>Visits</span>,
+    footer: info => info.column.id,
+  }),
+  columnHelper.accessor('launches', {
+    header: 'Status',
+    footer: info => info.column.id,
+  }),
+  columnHelper.accessor('wikipedia', {
+    header: 'wiki',
+    footer: info => info.column.id,
+  }),
+]
+
+
 export default async function Home() {
   const crewInfo: Crew[] = await fetchSpaceXCrew();
+
+  const [data, setData] = React.useState(() => [...crewInfo])
+  const rerender = React.useReducer(() => ({}), {})[1]
+
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  })
 
   return (
     <main className="">
@@ -50,11 +98,58 @@ export default async function Home() {
         7. We should be able to see the number of launches they have been on
         */}
         {crewInfo?.map((crew) => (
-          <div key={crew.id} className="w-auto h-auto">
-            <Image src={crew.image} alt={crew.name} width={50} height={50} />
-          </div>
+            <div key={crew.id} className="w-auto h-auto">
+              <Image src={crew.image} alt={crew.name} width={200} height={200} />
+            </div>
         ))}
       </section>
+          
+      <table>
+        <thead>
+          {table.getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          {table.getFooterGroups().map(footerGroup => (
+            <tr key={footerGroup.id}>
+              {footerGroup.headers.map(header => (
+                <th key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.footer,
+                        header.getContext()
+                      )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </tfoot>
+      </table>
+
     </main>
   );
 }
