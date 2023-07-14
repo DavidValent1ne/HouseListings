@@ -1,9 +1,6 @@
-// You need to tell nextjs "hey this is a react client side component" by adding the following comment
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-
-
+import { useState, useEffect } from "react";
 import {
   Column,
   Table,
@@ -18,7 +15,7 @@ import { Crew } from "@/app/page";
 
 const columnHelper = createColumnHelper<Crew>();
 const columns = [
-  columnHelper.accessor("name", {
+  columnHelper.accessor("name", { //these define the cells that will be used in the tanstack table
     cell: (info) => <i>{info.getValue()}</i>,
     id: 'name',
     header: () => <span>Name</span>,
@@ -56,7 +53,8 @@ type CrewTableProps = {
 
 export function CrewTable({ crewInfo }: CrewTableProps) {
   // This is not an error but you dont need to spread the array into a new array
-  const [data, setData] = useState(crewInfo)
+  // ^^^ Im not too sure how to do it any other way I wouldn't mind feedback
+  const [data] = useState(crewInfo)
   const [sorting, setSorting] = useState([])
   const [filtering, setFiltering] = useState('')
 
@@ -85,7 +83,7 @@ export function CrewTable({ crewInfo }: CrewTableProps) {
                 <th key={header.id}>
                   <div
                       {...{
-                        className: ['name', 'agency'].includes(header.id) && header.column.getCanSort()
+                        className: ['name', 'agency'].includes(header.id) && header.column.getCanSort() //This makes sure that only the name and agency columns can be clicked and show as clickable
                           ? 'cursor-pointer select-none'
                           : 'select-none',
                         onClick: ['name', 'agency'].includes(header.id) && header.column.getCanSort()
@@ -106,12 +104,12 @@ export function CrewTable({ crewInfo }: CrewTableProps) {
 
                     <div>
                       {['name'].includes(header.id) && (
-                        <FilterInput column={header.column} table={table} droppable={false} />
+                        <FilterInput column={header.column} table={table} droppable={false} /> //by setting droppable to false it will return a text box rather than a drop down menu but will also have a list of auto completed names
                       )}
                       {['agency', 'status'].includes(header.id) && (
                         <FilterInput column={header.column} table={table} droppable={true} />
                       )}
-                      {!['name', 'agency', 'status'].includes(header.id) && <br />}
+                      {!['name', 'agency', 'status'].includes(header.id) && <br />/* This adds breaks for columns that don't have search features to keep the table even */}
                     </div>
                 </th>
               ))}
@@ -134,7 +132,7 @@ export function CrewTable({ crewInfo }: CrewTableProps) {
   );
 }
 
-export function FilterInput({
+function FilterInput({
   column,
   table,
   droppable = false,
@@ -146,18 +144,12 @@ export function FilterInput({
   const flatRows = table.getFilteredRowModel().flatRows;
   const uniqueValues = new Set<any>();
 
-  flatRows.forEach((row) => {
+  flatRows.forEach((row) => { //finds all unique values for the current column
     const value = row.getValue(column.id);
     uniqueValues.add(value);
   });
   const sortedUniqueValues = Array.from(uniqueValues).sort()
-
-  const firstValue = table
-    .getPreFilteredRowModel()
-    .flatRows[0]?.getValue(column.id)
-
   const columnFilterValue = column.getFilterValue()
-  const columnValueAsString = column.getFilterValue() as string;
 
   return (
     <>
@@ -169,16 +161,16 @@ export function FilterInput({
 
       {droppable ? (
         <select
-        value={columnValueAsString ?? ''}
+        value={String(columnFilterValue) ?? ''}
         style={{
           color: '#000',
-          height: '23px',
+          height: '23px',//this is the exact value that makes the textbox the same height as the dropdown box
           width: '100px'
         }}
-        onChange={(e) => column.setFilterValue(e.target.value)}
+        onChange={(e) => column.setFilterValue(e.target.value)} //makes sure to display only values that contain the option from the drop table
       >
         <option value="">All</option>
-        {sortedUniqueValues.map((value: string) => (
+        {sortedUniqueValues.map((value: string) => (// makes only unique values to be within the drop table
           <option value={value} key={value}>
             {value}
           </option>
@@ -189,12 +181,12 @@ export function FilterInput({
         type="text"
         value={(columnFilterValue ?? '') as string}
         onChange={value => column.setFilterValue(value)}
-        placeholder={`Search... (${sortedUniqueValues.length})`}
+        placeholder={`Search... (${sortedUniqueValues.length})`} //lets the user know how many unique values are in the column, should only be used for searching names
         style={{
           color: '#000',
           height: '23px',
         }}
-        list={column.id + 'list'}
+        list={column.id + 'list'} //enable the input box to have a list of unique values
       />
       )}
       <div/>
@@ -202,16 +194,16 @@ export function FilterInput({
   )
 }
 
-function DebouncedInput({
+function DebouncedInput({ //used to prevent the table from updating as the user is typing for minor optimization, only needed for input boxes
   value: initialValue,
   onChange,
-  debounce = 250,
+  debounce = 250, //how much time of inactivity before updating the table
   ...props
 }: {
   value: string | number
   onChange: (value: string | number) => void
   debounce?: number
-} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'>) {
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'>) { // this line should make sure that the user input will not be ran as code
   const [value, setValue] = useState(initialValue)
 
   useEffect(() => {

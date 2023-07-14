@@ -9,14 +9,18 @@ export type Crew = {
   id: string;
 };
 
-async function fetchSpaceXCrew() {
+let crewCachedData: any = null; //this acts as a cache to reduce the number of api calls from the dynamic page
+export async function fetchSpaceXCrew() {
+  if (crewCachedData){
+      return crewCachedData
+  }
   const url = `https://api.spacexdata.com/v4/crew`;
 
   try {
     const response = await fetch(url);
     if (response.ok) {
       const data = await response.json();
-      // Process the fetched data here
+      crewCachedData = data;
       return data;
     } else {
       console.error("Request failed with status:", response.status);
@@ -25,9 +29,25 @@ async function fetchSpaceXCrew() {
     console.error("An error occurred:", error);
   }
 }
-export async function getCrew(){
-  const crewInfo: Crew[] = await fetchSpaceXCrew();
-  return crewInfo
+let launchCachedData: any = null
+export async function fetchLaunches() {
+  if (launchCachedData){
+    return launchCachedData
+}
+  const url = `https://api.spacexdata.com/v4/launches`;
+
+  try {
+      const response = await fetch(url);
+      if (response.ok) {
+          const data = await response.json();
+          launchCachedData = data
+          return data;
+      } else {
+          console.error("Request failed with status:", response.status);
+      }
+  } catch (error) {
+      console.error("An error occurred:", error);
+  }
 }
 
 export default async function Home() {
